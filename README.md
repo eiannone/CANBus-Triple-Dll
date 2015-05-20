@@ -12,43 +12,34 @@ Instantiate the **CBTController** class, passing serial port name, and then call
 
 ```C#
 var cbt = new CBTController("COM1");
-var info = cbt.GetSystemInfo();
+var info = await cbt.GetSystemInfo();
+Console.Writeln("Device: " + info["name"]);
 ```
 
 ## Implemented methods
 * *void* **Connect()**
-* *void* **Disconnect()**
+* *async Task* **Disconnect()**
 * *void* **SetComPort(**string portName**)**
-* *string* **SendCommand(**byte[] cmd**)**
-* *void* **SendCommandAsync(**byte[] cmd, StringReceivedHandler msgReceivedHandler**)**
-* *void* **CancelCommand(**bool closePort = false**)**
-* *Dictionary<string, string>* **JsonCommand(**byte[] cmd**)**
-* *Dictionary<string, string>* **GetSystemInfo()**
-* *void* **GetSystemInfoAsync(**JsonReceivedHandler msgReceivedHandler**)**
-* *byte[]* **DumpEeprom()**
-* *void* **DumpEepromAsync(**BytesReceivedHandler msgReceivedHandler**)**
-* *void* **SaveEeprom(**byte[] eeprom**)**
-* *void* **SaveSettings(**CBTSettings settings**)**
-* *void* **RestartBootloader()**
-* *Dictionary<string, string>* **ResetEeprom()**
-* *void* **ResetEepromAsync(**JsonReceivedHandler msgReceivedHandler**)**
-* *Dictionary<string, string>* **AutoBaudRate(**int bus**)**
-* *void* **AutoBaudRateAsync(**int bus, JsonReceivedHandler msgReceivedHandler**)**
-* *Dictionary<string, string>* **SetBaudRate(**int bus, int baud**)**
-* *void* **SetBaudRateAsync(**int bus, int baud, JsonReceivedHandler msgReceivedHandler**)**
-* *Dictionary<string, string>* **GetBusStatus(**int bus**)**
-* *void* **GetBusStatusAsync(**int bus, JsonReceivedHandler msgReceivedHandler**)**
-* *CBTSettings* **GetSettings()**
-* *Dictionary<string, string>* **ShowSettings()**
-* *void* **ShowSettingsAsync(**JsonReceivedHandler msgReceivedHandler**)**
-* *CanMode* **GetCanMode(**int bus**)**
-* *void* **SetCanMode(**int bus, CanMode mode**)**
-* *void* **SetCanModeAsync(**int bus, CanMode mode, JsonReceivedHandler msgReceivedHandler**)**
-* *void* **SendCanPacket(**int bus, byte[] msgId, byte[] data**)**
-* *void* **DisableLog(**int bus**)**
-* *void* **EnableLog(**int bus, int msgFilter1 = 0, int msgFilter2 = 0**)**
-* *void* **EnableLogWithMask(**int bus, int msgFilter1, int mask1, int msgFilter2 = 0, int mask2 = 0**)**
-* *void* **SetBluetoothMsgFilter(**int bus, bool enabled, int msgFilter1 = 0, int msgFilter2 = 0**)**
-* *void* **ResetBluetooth()**
-* *void* **EnableBluetoothPassthrough(**bool enabled = true**)**
-* *void* **SleepTimerToggle(**bool activate**)**
+* *async Task&lt;string&gt;* **SendCommand(**byte[] cmd**)**
+* *async Task* **CancelCommand(**bool closePort**)**
+* *async Task&lt;Dictionary&lt;string, string&gt;&gt;* **GetSystemInfo()**
+* *async Task&lt;byte[]&gt;* **DumpEeprom()**
+* *async Task* **SaveEeprom(**byte[] eeprom**)**
+* *async Task* **SaveSettings(**CBTSettings settings**)**
+* *async Task* **RestartBootloader()**
+* *async Task&lt;Dictionary&lt;string, string&gt;&gt;* **ResetEeprom()**
+* *async Task&lt;Dictionary&lt;string, string&gt;&gt;* **AutoBaudRate(**int bus**)**
+* *async Task&lt;Dictionary&lt;string, string&gt;&gt;* **SetBaudRate(**int bus, int baud**)**
+* *async Task&lt;Dictionary&lt;string, string&gt;&gt;* **GetBusStatus(**int bus**)**
+* *async Task&lt;CBTSettings&gt;* **GetSettings()**
+* *async Task&lt;Dictionary&lt;string, string&gt;&gt;* **ShowSettings()**
+* *async Task&lt;CanMode&gt;* **GetCanMode(**int bus**)**
+* *async Task* **SetCanMode(**int bus, CanMode mode**)**
+* *async Task* **SendCanPacket(**int bus, byte[] msgId, byte[] data**)**
+* *async Task&lt;bool&gt;* **DisableLog(**int bus**)**
+* *async Task&lt;bool&gt;* **EnableLog(**int bus, int msgFilter1, int msgFilter2**)**
+* *async Task&lt;bool&gt;* **EnableLogWithMask(**int bus, int msgFilter1, int mask1, int msgFilter2, int mask2**)**
+* *async Task* **SetBluetoothMsgFilter(**int bus, bool enabled, int msgFilter1, int msgFilter2**)**
+* *async Task* **ResetBluetooth()**
+* *async Task* **EnableBluetoothPassthrough(**bool enabled**)**
+* *async Task* **SleepTimerToggle(**bool activate**)**

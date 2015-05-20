@@ -47,7 +47,7 @@
     <Compile Include="CBTController.cs" />
     <Compile Include="CBTCommand.cs" />
     <Compile Include="CBTSerial.cs" />
-    <Compile Include="CBTSerialNew.cs" />
+    <Compile Include="CBTSerialOld.cs" />
     <Compile Include="CBTSettings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
