@@ -43,3 +43,8 @@ Console.Writeln("Device: " + info["name"]);
 * *async Task* **ResetBluetooth()**
 * *async Task* **EnableBluetoothPassthrough(**bool enabled**)**
 * *async Task* **SleepTimerToggle(**bool activate**)**
+
+## Firmware compatibility
+**SetCanMode()**  method require at least firmware version 0.5.0, which you can find here: https://github.com/eiannone/CANBus-Triple/tree/main
+
+**EnableLogWithMask()** method require at least firmware version 0.5.1, which you can find here: https://github.com/eiannone/CANBus-Triple/tree/can-mask
