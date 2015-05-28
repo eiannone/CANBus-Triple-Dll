@@ -20,13 +20,10 @@ namespace CanBusTriple
             remove { Serial.PortStatusChanged -= value; }
         }
 
-        public bool Connected {
-            get { return Serial.IsOpen; }
-        }
+        public bool Connected => Serial.IsOpen;
 
-        public bool Busy { 
-            get {  return Serial.Busy;  } 
-        }
+        public bool Busy => Serial.Busy;
+
         #endregion
 
         public CBTController(string comPort)
@@ -95,7 +92,7 @@ namespace CanBusTriple
                 capturedException = ExceptionDispatchInfo.Capture(ex);
             }
             if (Serial.IsOpen && !wasOpen) await Serial.ClosePort();
-            if (capturedException != null) capturedException.Throw();
+            capturedException?.Throw();
         }
 
         public async Task SaveSettings(CBTSettings settings)
@@ -156,9 +153,9 @@ namespace CanBusTriple
         #endregion
 
         #region Can commands
-        public async Task SendCanPacket(int bus, byte[] msgId, byte[] data)
+        public async Task SendCanPacket(CanMessage msg)
         {
-            await Serial.BlindCommand(CBTCommand.CanPacket(bus, msgId, data));
+            await Serial.BlindCommand(CBTCommand.CanPacket(msg));
         }
         #endregion
 

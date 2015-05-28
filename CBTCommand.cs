@@ -16,13 +16,9 @@ namespace CanBusTriple
         protected const byte CMD_SLEEP = 0x4E; // Naptime
 
         #region System commands
-        public static byte[] SystemInfo {
-            get { return new byte[] { CMD_SYSTEM, 0x01 }; }
-        }
+        public static byte[] SystemInfo => new byte[] { CMD_SYSTEM, 0x01 };
 
-        public static byte[] DumpEeprom {
-            get { return new byte[] { CMD_SYSTEM, 0x02 }; }
-        }
+        public static byte[] DumpEeprom => new byte[] { CMD_SYSTEM, 0x02 };
 
         public static byte[] SaveEeprom(int chunkN, byte[] chunk) {
             if (chunk.Length != 32) throw new Exception("Invalid chunk size (32 bytes expected)");
@@ -35,9 +31,7 @@ namespace CanBusTriple
             return cmd;
         }
 
-        public static byte[] ResetEeprom {
-            get { return new byte[] { CMD_SYSTEM, 0x04 }; }
-        }
+        public static byte[] ResetEeprom => new byte[] { CMD_SYSTEM, 0x04 };
 
         public static byte[] AutoBaudRate(int bus) {
             if (bus < 1 || bus > MAX_BUS) throw new Exception("Invalid Bus");
@@ -65,25 +59,26 @@ namespace CanBusTriple
             return new byte[] { CMD_SYSTEM, 0x10, (byte)bus };
         }
 
-        public static byte[] RestartBootloader {
-            get { return new byte[] { CMD_SYSTEM, 0x16 }; }
-        }
+        public static byte[] RestartBootloader => new byte[] { CMD_SYSTEM, 0x16 };
+
         #endregion
 
         #region Can commands
-        public static byte[] CanPacket(int bus, byte[] msgId, byte[] data) {
-            if (bus < 1 || bus > MAX_BUS) throw new Exception("Invalid Bus");
-            if (msgId.Length > 2 || msgId.Length == 0) throw new Exception("Invalid can identifier");
-            if (data.Length > 8) throw new Exception("Invalid packed data");
+        //public static byte[] CanPacket(int bus, byte[] msgId, byte[] data) {
+        public static byte[] CanPacket(CanMessage msg) {
+            if (msg.Bus < 1 || msg.Bus > MAX_BUS) throw new Exception("Invalid Bus");
+            if (msg.Id > 0xFFF || msg.Id <= 0) throw new Exception("Invalid can identifier");
+            if (msg.Data.Length > 8) throw new Exception("Invalid packed data");
+            var msgId = BitConverter.GetBytes(msg.Id);
             byte[] cmd = { 
                  CMD_SEND_CAN, 
-                 (byte)bus, 
-                 (msgId.Length > 1) ? msgId[0] : (byte)0, 
-                 (msgId.Length > 1) ? msgId[1] : msgId[0],
+                 (byte)msg.Bus, 
+                 msgId[1],
+                 msgId[0],
                  0, 0, 0, 0, 0, 0, 0, 0, 
-                 (byte)data.Length
+                 (byte)msg.Data.Length
             };
-            for (int i = 0; i < data.Length; i++) cmd[4 + i] = data[i];
+            Buffer.BlockCopy(msg.Data, 0, cmd, 4, msg.Data.Length);
             return cmd;
         }
         #endregion
@@ -92,7 +87,7 @@ namespace CanBusTriple
         public static byte[] BusLog(int bus, bool enabled, int msgFilter1 = 0, int msgFilter2 = 0) {
             if (bus < 1 || bus > MAX_BUS) throw new Exception("Invalid Bus");
             if (msgFilter1 > 65535 || msgFilter2 > 65535) throw new Exception("Invalid filters");
-            byte[] cmd = new byte[(enabled && msgFilter1 > 0) ? 7 : 3];
+            var cmd = new byte[(enabled && msgFilter1 > 0) ? 7 : 3];
             cmd[0] = CMD_LOG;
             cmd[1] = (byte)bus;
             cmd[2] = (byte)(enabled ? 1 : 0);
@@ -150,9 +145,7 @@ namespace CanBusTriple
             return cmd;
         }
 
-        public static byte[] BluetoothReset {
-            get { return new byte[] { CMD_BLUETOOTH, 0x01 }; }
-        }
+        public static byte[] BluetoothReset => new byte[] { CMD_BLUETOOTH, 0x01 };
 
         public static byte[] BluetoothPassthrough(bool enabled) {
             return new[] { CMD_BLUETOOTH, (byte)(enabled ? 0x02 : 0x03) };

@@ -26,23 +26,15 @@ namespace CanBusTriple
          * */
         public int Status { get; set; }
 
-        public string HexId {
-            get {
-                return string.Format("0x{0:X3}", Id);
-            }
-        }
+        public string HexId => $"0x{Id:X3}";
 
         public string HexData {
             get {
-                return Data.Aggregate("0x", (current, b) => current + string.Format("{0:X2}", b));
+                return Data.Aggregate("0x", (current, b) => current + $"{b:X2}");
             }
         }
 
-        public string Time {
-            get {
-                return DateTime.ToString("HH:mm:ss.fff");
-            }
-        }
+        public string Time => DateTime.ToString("HH:mm:ss.fff");
     }
 
     public class CBTSerial
@@ -66,10 +58,7 @@ namespace CanBusTriple
 
         public bool Busy { get; private set; }
 
-        public bool IsOpen
-        {
-            get { return _port.IsOpen; }
-        }
+        public bool IsOpen => _port.IsOpen;
 
         internal CBTSerial(string portName)
         {
@@ -95,7 +84,7 @@ namespace CanBusTriple
             _startTime = DateTime.Now;
             _stopwatch = Stopwatch.StartNew();
             _bgWorker.RunWorkerAsync();
-            if (PortStatusChanged != null) PortStatusChanged(true);
+            PortStatusChanged?.Invoke(true);
         }
 
         public async Task ClosePort()
@@ -111,7 +100,7 @@ namespace CanBusTriple
             _stopwatch.Stop();
             _port.Close();
             Busy = false;
-            if (PortStatusChanged != null) PortStatusChanged(false);
+            PortStatusChanged?.Invoke(false);
         }
 
         public void SetPort(string portName)
@@ -141,7 +130,7 @@ namespace CanBusTriple
                 capturedException = ExceptionDispatchInfo.Capture(ex);
             }
             if (!wasOpen) await ClosePort();
-            if (capturedException != null) capturedException.Throw();            
+            capturedException?.Throw();
         }
 
         public async Task<Dictionary<string, string>> JsonCommand(byte[] cmd)
@@ -166,7 +155,7 @@ namespace CanBusTriple
             }
             
             await EndCommand(!wasOpen);
-            if (capturedException != null) capturedException.Throw();
+            capturedException?.Throw();
             return _jsonReceived;
         }
 
@@ -192,7 +181,7 @@ namespace CanBusTriple
             }
 
             await EndCommand(!wasOpen);
-            if (capturedException != null) capturedException.Throw();
+            capturedException?.Throw();
             return (_resultReceived == true);
         }
 
@@ -220,7 +209,7 @@ namespace CanBusTriple
             }
 
             await EndCommand(!wasOpen);
-            if (capturedException != null) capturedException.Throw();
+            capturedException?.Throw();
             if (_jsonReceived != null)
                 return _jsonReceived.Aggregate("", (cur, el) => cur + ("[" + el.Key + "] => " + el.Value + "\r\n"));
             if (_resultReceived != null)
