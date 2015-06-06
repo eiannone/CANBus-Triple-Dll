@@ -75,7 +75,7 @@ namespace CanBusTriple
         {
             if (_port.IsOpen) return;
             _port.Open();
-            _cancelRead = new CancellationTokenSource();
+            ResetCancelToken();
             _bgWorker = new BackgroundWorker {WorkerSupportsCancellation = true};
             _bgWorker.DoWork += async (sender, e) => { 
                 while(!_bgWorker.CancellationPending) await DetectPacket();
@@ -217,23 +217,22 @@ namespace CanBusTriple
             return _lineReceived;
         }
 
+        private void ResetCancelToken()
+        {
+            _cancelRead = new CancellationTokenSource();
+            _cancelRead.Token.Register(ResetCancelToken);
+        }
+
         private async Task DetectPacket()
         {
-            if (_cancelRead.IsCancellationRequested) {
-                _cancelRead = new CancellationTokenSource();
-                return;
-            }
             var buf = new byte[10];
             try {
+                if (!_port.IsOpen) return;                
                 var bytesRead = await _port.BaseStream.ReadAsync(buf, 0, 1, _cancelRead.Token);                
                 if (bytesRead == 0) return;
             }
-            catch (TaskCanceledException) {
-                _cancelRead = new CancellationTokenSource();
-                return;
-            }
             catch (Exception ex) {
-                if (ex is IOException || ex is TimeoutException) return;
+                if (ex is TaskCanceledException || ex is IOException || ex is TimeoutException) return;
                 throw;
             }
 
@@ -248,9 +247,12 @@ namespace CanBusTriple
                     break;
 
                 case 0xFF: // OK message (COMMAND_OK)
-                    // Discard two next bytes (line terminator)
-                    var buff = new byte[2];
-                    await _port.BaseStream.ReadAsync(buff, 0, 2, _cancelRead.Token);
+                    try {
+                        // Discard two next bytes (line terminator)
+                        var buff = new byte[2];
+                        await _port.BaseStream.ReadAsync(buff, 0, 2, _cancelRead.Token);                       
+                    }
+                    catch (TaskCanceledException) {}
                     _resultReceived = true;
                     break;
 
@@ -267,9 +269,14 @@ namespace CanBusTriple
         private async Task ReadCanMessage(DateTime timestamp)
         {
             int bytesToRead, bytesRead;
-            do {
-                bytesToRead = _canBuf.Length - _canRead;
-                bytesRead = await _port.BaseStream.ReadAsync(_canBuf, _canRead, bytesToRead, _cancelRead.Token);
+            do {                
+                try {
+                    bytesToRead = _canBuf.Length - _canRead;
+                    bytesRead = await _port.BaseStream.ReadAsync(_canBuf, _canRead, bytesToRead, _cancelRead.Token);
+                }
+                catch (TaskCanceledException) {
+                    return;
+                }
                 if (bytesRead == bytesToRead) {
                     // Read completed
                     _canRead = 0;

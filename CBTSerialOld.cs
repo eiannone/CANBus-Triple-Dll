@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO.Ports;
+using System.Linq;
 using System.Threading;
 using Newtonsoft.Json;
 
@@ -38,15 +39,9 @@ namespace CanBusTriple
         private StringReceivedHandler _stringHandler;
         private CommandType _currentCmd = CommandType.None;
 
-        public bool Busy
-        {
-            get { return _currentCmd != CommandType.None; }
-        }
+        public bool Busy => _currentCmd != CommandType.None;
 
-        public bool IsOpen
-        {
-            get { return _port.IsOpen; }
-        }
+        public bool IsOpen => _port.IsOpen;
 
         internal CBTSerialOld(string portName)
         {
@@ -60,7 +55,7 @@ namespace CanBusTriple
             if (!_port.IsOpen) return;
             _stopwatch.Stop();
             _port.Close();
-            if (PortStatusChanged != null) PortStatusChanged(false);
+            PortStatusChanged?.Invoke(false);
         }
 
         public void OpenPort()
@@ -69,7 +64,7 @@ namespace CanBusTriple
             _port.Open();
             _startTime = DateTime.Now;
             _stopwatch = Stopwatch.StartNew();
-            if (PortStatusChanged != null) PortStatusChanged(true);
+            PortStatusChanged?.Invoke(true);
         }
 
         public void SetPort(string portName)
@@ -139,8 +134,7 @@ namespace CanBusTriple
             _currentCmd = CommandType.All;
             var wasOpen = _port.IsOpen;
             _jsonHandler = json => {
-                var str = "";
-                foreach (var el in json) str += "[" + el.Key + "] => " + el.Value + "\r\n";
+                var str = json.Aggregate("", (c, el) => c + ("[" + el.Key + "] => " + el.Value + "\r\n"));
                 msgReceivedHandler(str);
             };
             _okHandler = result => { msgReceivedHandler("OK"); };
@@ -201,16 +195,16 @@ namespace CanBusTriple
                             // Discard two next bytes (line terminator)
                             _port.ReadByte();
                             _port.ReadByte();
-                            if (OkReceived != null) OkReceived(true);
+                            OkReceived?.Invoke(true);
                             break;
 
                         case 0x80: // Error message (COMMAND_ERROR)
-                            if (OkReceived != null) OkReceived(false);
+                            OkReceived?.Invoke(false);
                             break;
 
                         default: // Reads a line
                             var line = ((char)b) + _port.ReadLine();
-                            if (LineReceived != null) LineReceived(line);
+                            LineReceived?.Invoke(line);
                             break;
                     }
                 }
