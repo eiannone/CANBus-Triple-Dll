@@ -20,6 +20,11 @@ namespace CanBusTriple
             remove { Serial.PortStatusChanged -= value; }
         }
 
+        public event DebugHandler Debug {
+            add { Serial.Debug += value; }
+            remove { Serial.Debug -= value; }
+        }
+
         public bool Connected => Serial.IsOpen;
 
         public bool Busy => Serial.Busy;

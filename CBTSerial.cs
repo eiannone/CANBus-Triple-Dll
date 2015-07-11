@@ -6,12 +6,17 @@ using System.IO;
 using System.IO.Ports;
 using System.Linq;
 using System.Runtime.ExceptionServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
 namespace CanBusTriple
 {
+    public delegate void PortStatusHandler(bool isOpen);
+    public delegate void CanMessageReceivedHandler(CanMessage msg);
+    public delegate void DebugHandler(string info);
+
     public struct CanMessage
     {
         public int Bus;
@@ -55,6 +60,7 @@ namespace CanBusTriple
 
         public event PortStatusHandler PortStatusChanged;
         public event CanMessageReceivedHandler CanMessageReceived;
+        public event DebugHandler Debug;
 
         public bool Busy { get; private set; }
 
@@ -122,7 +128,7 @@ namespace CanBusTriple
             var wasOpen = _port.IsOpen;
             try {
                 if (!wasOpen) OpenPort();                
-                await _port.BaseStream.WriteAsync(cmd, 0, cmd.Length);
+                await WriteBytes(cmd);
                 // Waits for writing completed
                 while (_port.BytesToWrite > 0) await Task.Delay(50);       
             }
@@ -142,7 +148,7 @@ namespace CanBusTriple
             try {
                 if (!wasOpen) OpenPort();
                 _jsonReceived = null;
-                await _port.BaseStream.WriteAsync(cmd, 0, cmd.Length);
+                await WriteBytes(cmd);
                 var timeout = READ_TIMEOUT;
                 while (_jsonReceived == null && timeout > 0) {
                     await Task.Delay(20);
@@ -168,7 +174,7 @@ namespace CanBusTriple
             try {
                 if (!wasOpen) OpenPort();
                 _resultReceived = null;
-                await _port.BaseStream.WriteAsync(cmd, 0, cmd.Length);
+                await WriteBytes(cmd);
                 var timeout = READ_TIMEOUT;
                 while (_resultReceived == null && timeout > 0) {
                     await Task.Delay(20);
@@ -196,7 +202,7 @@ namespace CanBusTriple
                 _lineReceived = null;
                 _jsonReceived = null;
                 _resultReceived = null;
-                await _port.BaseStream.WriteAsync(cmd, 0, cmd.Length);
+                await WriteBytes(cmd);
                 var timeout = READ_TIMEOUT;
                 while (_lineReceived == null && _jsonReceived == null && _resultReceived == null && timeout > 0) {
                     await Task.Delay(20);
@@ -243,10 +249,12 @@ namespace CanBusTriple
 
                 case 0x7B: // Json message ('{')
                     var str = _port.ReadTo("}\r\n");
+                    Debug?.Invoke("<- {" + str + "}");
                     _jsonReceived = JsonConvert.DeserializeObject<Dictionary<string, string>>("{" + str + "}");
                     break;
 
                 case 0xFF: // OK message (COMMAND_OK)
+                    Debug?.Invoke("<- COMMAND_OK");
                     try {
                         // Discard two next bytes (line terminator)
                         var buff = new byte[2];
@@ -257,11 +265,13 @@ namespace CanBusTriple
                     break;
 
                 case 0x80: // Error message (COMMAND_ERROR)
+                    Debug?.Invoke("<- COMMAND_ERROR");
                     _resultReceived = false;
                     break;
 
                 default: // Read a line
                     _lineReceived = ((char)buf[0]) + _port.ReadLine();
+                    Debug?.Invoke(Encoding.ASCII.GetBytes(_lineReceived).Aggregate("<-", (st, el) => st + $" {el:X2}"));
                     break;
             }            
         }
@@ -280,6 +290,7 @@ namespace CanBusTriple
                 if (bytesRead == bytesToRead) {
                     // Read completed
                     _canRead = 0;
+                    Debug?.Invoke(_canBuf.Aggregate("<- CAN", (str, el) => str + $" {el:X2}"));
                     if (CanMessageReceived == null) continue;
                     var msg = new CanMessage {
                         Bus = _canBuf[0],
@@ -297,6 +308,12 @@ namespace CanBusTriple
                 }
             }
             while (bytesRead < bytesToRead);
+        }
+
+        private async Task WriteBytes(byte[] bytes)
+        {
+            await _port.BaseStream.WriteAsync(bytes, 0, bytes.Length);
+            Debug?.Invoke(bytes.Aggregate("->", (str, el) => str + $" {el:X2}"));
         }
     }
 }

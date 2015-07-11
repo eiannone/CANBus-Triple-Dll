@@ -12,10 +12,8 @@ namespace CanBusTriple
     
     public delegate void StringReceivedHandler(string line);
     public delegate void JsonReceivedHandler(Dictionary<string, string> json);
-    public delegate void CanMessageReceivedHandler(CanMessage msg);
     public delegate void OkReceivedHandler(bool result);
     public delegate void BytesReceivedHandler(byte[] bytes);
-    public delegate void PortStatusHandler(bool isOpen);
 
     public class CBTSerialOld
     {
