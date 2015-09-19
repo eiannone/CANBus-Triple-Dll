@@ -131,7 +131,7 @@ namespace CanBusTriple
         #endregion
 
         #region Bluetooth commands
-        public static byte[] BluettothFilter(int bus, bool enabled, int msgFilter1 = 0, int msgFilter2 = 0) {
+        public static byte[] BluetoothFilter(int bus, bool enabled, int msgFilter1 = 0, int msgFilter2 = 0) {
             if (bus < 1 || bus > MAX_BUS) throw new Exception("Invalid Bus");
             if (msgFilter1 > 65535 || msgFilter2 > 65535 || (enabled && msgFilter1 <= 0 && msgFilter2 <= 0))
                 throw new Exception("Invalid filters");

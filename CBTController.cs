@@ -184,7 +184,7 @@ namespace CanBusTriple
         #region Bluetooth commands
         public async Task SetBluetoothMsgFilter(int bus, bool enabled, int msgFilter1 = 0, int msgFilter2 = 0)
         {
-            await Serial.BlindCommand(CBTCommand.BluettothFilter(bus, enabled, msgFilter1, msgFilter2));
+            await Serial.BlindCommand(CBTCommand.BluetoothFilter(bus, enabled, msgFilter1, msgFilter2));
         }
 
         public async Task ResetBluetooth()
